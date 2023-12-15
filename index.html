@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <title>Vite App</title>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="/didact.js"></script>
+  <script type="text/babel">
+    /** @jsx Didact.createElement */
+    const element = (<div id="foo">
+      <h1>Bienvenue sur le site</h1>
+      <a href="#">En savoir plus !</a>
+    </div>)
+    Didact.render(element, document.getElementById("app"))
+  </script>
+  </body>
+</html>
