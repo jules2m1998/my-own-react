@@ -13,17 +13,22 @@
   <script type="text/babel">
     /** @jsx Didact.createElement */
 
-    const element = (<div id="foo">
-      <h1>Bienvenue sur le site</h1>
-      <a href="#">En savoir plus !</a>
-    </div>)
-    Didact.render(element, document.getElementById("app"));
-    setTimeout(() => {
-      const element = (<div id="bar">
-        <a href="#">En savoir plus !</a>
+    function step1(){
+      const element = (<div id="foo">
+        <h1>Bienvenue sur le site</h1>
+        <button onclick={step2}>Step 2</button>
       </div>)
       Didact.render(element, document.getElementById("app"));
-    }, 2000)
+    }
+    function step2(){
+      const element = (<div id="foo">
+        <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. A accusamus atque debitis deserunt dicta earum eius, eveniet fuga iste labore laudantium minus nam, nostrum quidem quis rem soluta tenetur voluptas?</p>
+        <button onclick={step1}>Step 1</button>
+      </div>)
+      Didact.render(element, document.getElementById("app"));
+    }
+
+    step1();
   </script>
   </body>
 </html>

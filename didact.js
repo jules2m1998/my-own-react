@@ -1,9 +1,12 @@
 import {createElement} from "./didact/vdom";
-import {createDom} from "./didact/dom";
+import {createDom, updateDom} from "./didact/dom";
+import {DELETION, PLACEMENT, UPDATE} from "./didact/consts";
 
 
 let nextUnitOfWork = null;
 let wipRoot = null;
+let currentRoot = null;
+let deletions = [];
 
 /**
  *
@@ -15,22 +18,32 @@ function render(element, container){
         dom: container,
         props: {
             children: [element]
-        }
+        },
+        alternate: currentRoot
     }
     nextUnitOfWork = wipRoot;
+    deletions = [];
 }
 
 function commitWork(fiber) {
-    console.log(fiber)
     if(!fiber) return;
     const domParent = fiber.parent.dom;
-    domParent.appendChild(fiber.dom);
-    commitWork(fiber.child)
+    if (fiber.effectTag === PLACEMENT && fiber.dom !== null){
+        domParent.appendChild(fiber.dom);
+    }else if (fiber.effectTag === DELETION) {
+        domParent.removeChild(fiber.dom);
+        return;
+    }else if (fiber.effectTag === UPDATE && fiber.dom !== null){
+        updateDom(fiber.dom, fiber.alternate.props, fiber.props)
+    }
     commitWork(fiber.sibling)
+    commitWork(fiber.child)
 }
 
 function commitRoot() {
+    deletions.forEach(commitWork)
     commitWork(wipRoot.child);
+    currentRoot = wipRoot;
     wipRoot = null;
 }
 
@@ -61,30 +74,9 @@ function performUnitOfWork(fiber) {
     if(!fiber.dom){
         fiber.dom = createDom(fiber);
     }
-    if (fiber.parent){
-        fiber.parent.dom.appendChild(fiber.dom);
-    }
     const elements = fiber.props.children;
-    let index = 0;
-    let prevSibling = null;
-    while (index < elements.length){
-        const element = elements[index];
-        const newFiber = {
-            type: element.type,
-            props: element.props,
-            parent: fiber,
-            dom: null
-        }
-        if (index === 0){
-            fiber.child = newFiber;
-        }else {
-            prevSibling.sibling = newFiber
-        }
-        prevSibling = newFiber;
-        index++;
-    }
+    reconcileChildren(fiber, elements)
     if (fiber.child) return fiber.child;
-
     let nextFiber = fiber;
     while (nextFiber){
         if (nextFiber.sibling){
@@ -94,6 +86,53 @@ function performUnitOfWork(fiber) {
     }
 
     return null;
+}
+
+function reconcileChildren(wipFiber, elements) {
+    let index = 0;
+    let oldFiber = wipFiber.alternate && wipFiber.alternate.child;
+
+    let prevSibling = null;
+    while (
+        index < elements.length ||
+        oldFiber != null
+        ){
+        const element = elements[index];
+        const sameType = oldFiber && element && element.type === oldFiber.type;
+        let newFiber = null;
+        if (sameType){
+            newFiber = {
+                type: element.type,
+                props: element.props,
+                parent: wipFiber,
+                dom: oldFiber.dom,
+                alternate: oldFiber,
+                effectTag: UPDATE
+            }
+        }
+        if(element && !sameType){
+            newFiber = {
+                type: element.type,
+                props: element.props,
+                parent: wipFiber,
+                dom: null,
+                alternate: null,
+                effectTag: PLACEMENT
+            }
+        }
+        if (oldFiber && !sameType){
+            oldFiber.effectTag = DELETION;
+            deletions.push(oldFiber);
+        }
+        if (oldFiber) oldFiber = oldFiber.sibling;
+        if (index === 0){
+            wipFiber.child = newFiber;
+        }else if (element) {
+            prevSibling.sibling = newFiber
+        }
+        prevSibling = newFiber;
+        index++;
+    }
 }
 
 window.Didact = {
