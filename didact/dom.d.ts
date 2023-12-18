@@ -1,0 +1,1 @@
+export declare function createDom(fiber: object): HTMLElement | Text
