@@ -3,6 +3,7 @@ import {createDom} from "./didact/dom";
 
 
 let nextUnitOfWork = null;
+let wipRoot = null;
 
 /**
  *
@@ -10,12 +11,27 @@ let nextUnitOfWork = null;
  * @param {HTMLElement} container
  */
 function render(element, container){
-    nextUnitOfWork = {
+    wipRoot = {
         dom: container,
         props: {
             children: [element]
         }
     }
+    nextUnitOfWork = wipRoot;
+}
+
+function commitWork(fiber) {
+    console.log(fiber)
+    if(!fiber) return;
+    const domParent = fiber.parent.dom;
+    domParent.appendChild(fiber.dom);
+    commitWork(fiber.child)
+    commitWork(fiber.sibling)
+}
+
+function commitRoot() {
+    commitWork(wipRoot.child);
+    wipRoot = null;
 }
 
 /**
@@ -27,6 +43,9 @@ function workLoop(deadline){
     while (nextUnitOfWork && !shouldYield){
         nextUnitOfWork = performUnitOfWork(nextUnitOfWork);
         shouldYield = deadline.timeRemaining() < 1;
+    }
+    if (!nextUnitOfWork && wipRoot){
+        commitRoot();
     }
     requestIdleCallback(workLoop);
 }

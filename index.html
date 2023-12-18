@@ -17,7 +17,13 @@
       <h1>Bienvenue sur le site</h1>
       <a href="#">En savoir plus !</a>
     </div>)
-    Didact.render(element, document.getElementById("app"))
+    Didact.render(element, document.getElementById("app"));
+    setTimeout(() => {
+      const element = (<div id="bar">
+        <a href="#">En savoir plus !</a>
+      </div>)
+      Didact.render(element, document.getElementById("app"));
+    }, 2000)
   </script>
   </body>
 </html>
