@@ -1,22 +1,17 @@
-import {TEXT_ELEMENT} from "./consts";
+import {TEXT_ELEMENT, UPDATE} from "./consts";
+
+const isEvent = k => k.toLowerCase().startsWith("on");
+const isProperty = k => k !== "children"
+const eventName = k => k.toLowerCase().substring(2)
 
 export function createDom(fiber) {
     const dom =
         fiber.type === TEXT_ELEMENT
             ? document.createTextNode(fiber.props.nodeValue)
             : document.createElement(fiber.type);
-
-    Object.keys(fiber.props).forEach(name => {
-        if (name !== "children") {
-            dom[name] = fiber.props[name];
-        }
-    })
+    updateDom(dom, {}, fiber.props)
     return dom;
 }
-
-const isEvent = k => k.toLowerCase().startsWith("on");
-const isProperty = k => k !== "children"
-const eventName = k => k.toLowerCase().substring(2)
 
 export function updateDom(dom, prevProps, nextProps) {
     // Supprime les anciene proprietes
@@ -33,15 +28,17 @@ export function updateDom(dom, prevProps, nextProps) {
             }
         })
 
+
     // Ajout des nouvelles props
     Object
-        .keys(prevProps)
+        .keys(nextProps)
         .filter(isProperty)
         .forEach(name => {
             if (prevProps[name] !== nextProps[name]){
                 if (!isEvent(name)){
                     dom[name] = nextProps[name];
                 }else {
+                    console.log(name)
                     if (prevProps[name]){
                         dom.removeEventListener(eventName(name), prevProps[name])
                     }
